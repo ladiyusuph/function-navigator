@@ -930,6 +930,82 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.createTreeView('functionTreeView', { treeDataProvider: treeProvider })
     );
 
+
+    // --- AUTO REFRESH ON FILE SYSTEM CHANGES ALL WORKSPACE ---
+    //const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+    /*
+    // Respect user’s debounceMs setting
+    const DEBOUNCE_DELAY = treeProvider['debounceMs'] ?? 500;
+    let refreshTimer: NodeJS.Timeout | undefined;
+
+    function scheduleRefresh(reason: string) {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        console.log(`Auto-refresh triggered (${reason})`);
+        treeProvider.refresh();
+        refreshTimer = undefined;
+      }, DEBOUNCE_DELAY);
+    }
+
+    watcher.onDidCreate(uri => {
+      console.log('File created:', uri.fsPath);
+      scheduleRefresh('create');
+    });
+
+    watcher.onDidChange(uri => {
+      console.log('File changed:', uri.fsPath);
+      scheduleRefresh('change');
+    });
+
+    watcher.onDidDelete(uri => {
+      console.log('File deleted:', uri.fsPath);
+      scheduleRefresh('delete');
+    });
+
+    // Also handle workspace folder changes
+    const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders(event => {
+      console.log('Workspace folders changed');
+      scheduleRefresh('workspace');
+    });
+
+    // Ensure proper disposal
+    context.subscriptions.push(watcher, workspaceWatcher);
+    */
+    //REFRESH JUST AFFECTED FOLDER
+
+    // --- AUTO REFRESH ON FILE SYSTEM CHANGES ---
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+
+    let refreshTimer: NodeJS.Timeout | undefined;
+    //const DEBOUNCE_DELAY = 500; // ms — adjust if needed
+    const DEBOUNCE_DELAY = treeProvider['debounceMs'] ?? 500;
+
+    const scheduleRefresh = (reason: string, uri: vscode.Uri) => {
+      console.log(`[FunctionTree] FS change (${reason}): ${uri.fsPath}`);
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        console.log('[FunctionTree] Debounced refresh triggered');
+        treeProvider.refresh();
+      }, DEBOUNCE_DELAY);
+    };
+
+    watcher.onDidCreate(uri => scheduleRefresh('create', uri), null, context.subscriptions);
+    watcher.onDidChange(uri => scheduleRefresh('change', uri), null, context.subscriptions);
+    watcher.onDidDelete(uri => scheduleRefresh('delete', uri), null, context.subscriptions);
+
+    // --- WORKSPACE FOLDER CHANGES ---
+    const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      console.log('[FunctionTree] Workspace folders changed');
+      treeProvider.refresh();
+    });
+
+    context.subscriptions.push(watcher, workspaceWatcher);
+
+    
+
+
+
+
     // Register FileDecorationProvider
     context.subscriptions.push(
       vscode.window.registerFileDecorationProvider({
@@ -1156,114 +1232,114 @@ export function activate(context: vscode.ExtensionContext) {
       }),
 
       // ✅ Copy File/Folder (Ctrl+C)
-vscode.commands.registerCommand('functionTree.copyFile', async (uri: vscode.Uri) => {
-  try {
-    const stat = await vscode.workspace.fs.stat(uri);
-    const type = stat.type === vscode.FileType.Directory ? 'folder' : 'file';
-
-    context.workspaceState.update('functionTree.copySource', { uri, type });
-    vscode.window.showInformationMessage(`Copied ${type}: ${path.basename(uri.fsPath)}`);
-  } catch (err) {
-    console.error('Error copying file/folder:', err);
-    vscode.window.showErrorMessage('Failed to copy file/folder.');
-  }
-}),
-
-
-// ✅ Paste File/Folder (Ctrl+V)
-vscode.commands.registerCommand('functionTree.pasteFile', async (uri: vscode.Uri) => {
-  try {
-    const cutSource: vscode.Uri | undefined = context.workspaceState.get('functionTree.cutSource');
-    const copySource: { uri: vscode.Uri; type: 'file' | 'folder' } | undefined = context.workspaceState.get('functionTree.copySource');
-    
-
-
-    const source = cutSource || copySource?.uri;
-    if (!source) {
-      vscode.window.showWarningMessage('Nothing to paste.');
-      return;
-    }
-
-    const isCopy = !!copySource;
-    const sourceType: 'file' | 'folder' = copySource?.type || 'file';
-    const targetDir =
-      (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.Directory
-        ? uri.fsPath
-        : path.dirname(uri.fsPath);
-
-    const baseName = path.basename(source.fsPath);
-    let destination = vscode.Uri.joinPath(vscode.Uri.file(targetDir), baseName);
-
-    // 🧩 Auto-rename if copying to avoid overwrite
-    if (isCopy) {
-      let counter = 1;
-      while (true) {
+      vscode.commands.registerCommand('functionTree.copyFile', async (uri: vscode.Uri) => {
         try {
-          await vscode.workspace.fs.stat(destination);
-          destination = vscode.Uri.joinPath(
-            vscode.Uri.file(targetDir),
-            `${path.basename(baseName, path.extname(baseName))}_copy${counter}${path.extname(baseName)}`
-          );
-          counter++;
-        } catch {
-          break;
-        }
-      }
-    } else {
-      // 🧩 Confirm overwrite if moving
-      try {
-        await vscode.workspace.fs.stat(destination);
-        const confirm = await vscode.window.showWarningMessage(
-          `A file/folder named "${baseName}" already exists. Overwrite?`,
-          { modal: true },
-          'Yes',
-          'No'
-        );
-        if (confirm !== 'Yes') return;
-      } catch {
-        // OK to move
-      }
-    }
+          const stat = await vscode.workspace.fs.stat(uri);
+          const type = stat.type === vscode.FileType.Directory ? 'folder' : 'file';
 
-    // 🗂 Copy or move files/folders
-    if (isCopy) {
-      if (sourceType === 'file') {
-        const fileData = await vscode.workspace.fs.readFile(source);
-        await vscode.workspace.fs.writeFile(destination, fileData);
-      } else {
-        // Folder copy: recursive function
-        const copyFolderRecursive = async (src: vscode.Uri, dest: vscode.Uri) => {
-          await vscode.workspace.fs.createDirectory(dest);
-          const items = await vscode.workspace.fs.readDirectory(src);
-          for (const [name, type] of items) {
-            const srcChild = vscode.Uri.joinPath(src, name);
-            const destChild = vscode.Uri.joinPath(dest, name);
-            if (type === vscode.FileType.Directory) {
-              await copyFolderRecursive(srcChild, destChild);
-            } else {
-              const data = await vscode.workspace.fs.readFile(srcChild);
-              await vscode.workspace.fs.writeFile(destChild, data);
+          context.workspaceState.update('functionTree.copySource', { uri, type });
+          vscode.window.showInformationMessage(`Copied ${type}: ${path.basename(uri.fsPath)}`);
+        } catch (err) {
+          console.error('Error copying file/folder:', err);
+          vscode.window.showErrorMessage('Failed to copy file/folder.');
+        }
+      }),
+
+
+      // ✅ Paste File/Folder (Ctrl+V)
+      vscode.commands.registerCommand('functionTree.pasteFile', async (uri: vscode.Uri) => {
+        try {
+          const cutSource: vscode.Uri | undefined = context.workspaceState.get('functionTree.cutSource');
+          const copySource: { uri: vscode.Uri; type: 'file' | 'folder' } | undefined = context.workspaceState.get('functionTree.copySource');
+
+
+
+          const source = cutSource || copySource?.uri;
+          if (!source) {
+            vscode.window.showWarningMessage('Nothing to paste.');
+            return;
+          }
+
+          const isCopy = !!copySource;
+          const sourceType: 'file' | 'folder' = copySource?.type || 'file';
+          const targetDir =
+            (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.Directory
+              ? uri.fsPath
+              : path.dirname(uri.fsPath);
+
+          const baseName = path.basename(source.fsPath);
+          let destination = vscode.Uri.joinPath(vscode.Uri.file(targetDir), baseName);
+
+          // 🧩 Auto-rename if copying to avoid overwrite
+          if (isCopy) {
+            let counter = 1;
+            while (true) {
+              try {
+                await vscode.workspace.fs.stat(destination);
+                destination = vscode.Uri.joinPath(
+                  vscode.Uri.file(targetDir),
+                  `${path.basename(baseName, path.extname(baseName))}_copy${counter}${path.extname(baseName)}`
+                );
+                counter++;
+              } catch {
+                break;
+              }
+            }
+          } else {
+            // 🧩 Confirm overwrite if moving
+            try {
+              await vscode.workspace.fs.stat(destination);
+              const confirm = await vscode.window.showWarningMessage(
+                `A file/folder named "${baseName}" already exists. Overwrite?`,
+                { modal: true },
+                'Yes',
+                'No'
+              );
+              if (confirm !== 'Yes') return;
+            } catch {
+              // OK to move
             }
           }
-        };
-        await copyFolderRecursive(source, destination);
-      }
-      vscode.window.showInformationMessage(`Copied ${sourceType} to: ${destination.fsPath}`);
-    } else {
-      await vscode.workspace.fs.rename(source, destination, { overwrite: true });
-      vscode.window.showInformationMessage(`Moved ${baseName} to: ${destination.fsPath}`);
-    }
 
-    // 🧹 Clear cut/copy state
-    context.workspaceState.update('functionTree.cutSource', undefined);
-    if (!isCopy) context.workspaceState.update('functionTree.copySource', undefined);
+          // 🗂 Copy or move files/folders
+          if (isCopy) {
+            if (sourceType === 'file') {
+              const fileData = await vscode.workspace.fs.readFile(source);
+              await vscode.workspace.fs.writeFile(destination, fileData);
+            } else {
+              // Folder copy: recursive function
+              const copyFolderRecursive = async (src: vscode.Uri, dest: vscode.Uri) => {
+                await vscode.workspace.fs.createDirectory(dest);
+                const items = await vscode.workspace.fs.readDirectory(src);
+                for (const [name, type] of items) {
+                  const srcChild = vscode.Uri.joinPath(src, name);
+                  const destChild = vscode.Uri.joinPath(dest, name);
+                  if (type === vscode.FileType.Directory) {
+                    await copyFolderRecursive(srcChild, destChild);
+                  } else {
+                    const data = await vscode.workspace.fs.readFile(srcChild);
+                    await vscode.workspace.fs.writeFile(destChild, data);
+                  }
+                }
+              };
+              await copyFolderRecursive(source, destination);
+            }
+            vscode.window.showInformationMessage(`Copied ${sourceType} to: ${destination.fsPath}`);
+          } else {
+            await vscode.workspace.fs.rename(source, destination, { overwrite: true });
+            vscode.window.showInformationMessage(`Moved ${baseName} to: ${destination.fsPath}`);
+          }
 
-    treeProvider.refresh?.();
-  } catch (err) {
-    console.error('Error pasting file/folder:', err);
-    vscode.window.showErrorMessage('Failed to paste file/folder.');
-  }
-}),
+          // 🧹 Clear cut/copy state
+          context.workspaceState.update('functionTree.cutSource', undefined);
+          if (!isCopy) context.workspaceState.update('functionTree.copySource', undefined);
+
+          treeProvider.refresh?.();
+        } catch (err) {
+          console.error('Error pasting file/folder:', err);
+          vscode.window.showErrorMessage('Failed to paste file/folder.');
+        }
+      }),
 
       // ✅ Paste File/Folder (Ctrl+V) — supports recursive folder copy
       /*vscode.commands.registerCommand('functionTree.pasteFile', async (uri: vscode.Uri) => {
