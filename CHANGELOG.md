@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] – 2025-11-01
+### ⚡ Auto-Refresh Update
+- The **Project + Functions** view now automatically updates when files or folders are created, renamed, or deleted.  
+  No more manual refreshes — changes appear instantly.  
+- Added an optimized **File System Watcher** with debounced, targeted refreshes for smoother performance.  
+- Improved reliability when switching or adding workspace folders.  
+- Minor internal refactors and performance tuning for faster tree updates.
+
 ## [1.3.9] - 2025-10-28
 ### Added
 - Create new files and folders directly from the Function Tree view.
