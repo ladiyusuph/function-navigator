@@ -1,6 +1,23 @@
 # Changelog
 
+## [1.4.1] – 2025-11-03
+
+### Added
+- Toolbar buttons for Function Tree header:
+  - 🗎 New File
+  - 📁 New Folder
+  - 🔄 Refresh
+  - 🔽 Collapse All
+- Icons added to `New File` and `New Folder` commands using Codicons.
+
+### Fixed
+- `New File` and `New Folder` previously showed text instead of icons in the Function Tree header.
+
+### Misc
+- Minor updates to `package.json` commands and menus to support toolbar icons.
+
 ## [1.4.0] – 2025-11-01
+
 ### ⚡ Auto-Refresh Update
 - The **Project + Functions** view now automatically updates when files or folders are created, renamed, or deleted.  
   No more manual refreshes — changes appear instantly.  
@@ -9,6 +26,7 @@
 - Minor internal refactors and performance tuning for faster tree updates.
 
 ## [1.3.9] - 2025-10-28
+
 ### Added
 - Create new files and folders directly from the Function Tree view.
 - Open files or folders in the integrated terminal.
@@ -21,6 +39,7 @@
 - Overwrite confirmation prompt added for move operations.
 
 ## [1.3.8] – 2025-10-26
+
 ### 🧹 Context Menu Added & Safety Enhancements
 - Added Delete File/Folder command with a confirmation prompt to prevent accidental deletions.
 - Added Rename File/Folder command with validation and confirmation before applying changes.
@@ -29,16 +48,19 @@
 - Added codicons and now the refresh icon appears when you hover a  project folder, click it to refresh.
 
 ## [1.3.7] – 2025-10-22
+
 ### 🚀 Very Useful Update
 - Clicking on a file now opens it in the editor, just like in the normal File Explorer. This makes the **Project + Functions Pane** a practical replacement for the default Project Pane.
 
 ## [1.3.6] – 2025-10-21
+
 - Bundled with `esbuild` for faster runtime and smaller size.  
 - Local VSIX testing workflow added before publishing.  
 - Fixed bundling issues with Vue SFC compiler dependencies.  
 - Optimized extension build for improved performance and reduced bundle size.
 
 ## [1.3.5] – 2025-10-21  
+
 ### 🧩 Updated
 - Added screenshot JPG to showcase Functions Navigator in action
 
@@ -85,15 +107,18 @@
 - Deduplicated tree entries to ensure a clean, accurate function list  
 
 ## [1.3.3] – 2025-10-20
+
 ### 🧩 Updated
 - Updated GitHub repository links in README and package.json
 - Minor metadata refinements
 
 ## [1.3.2] – 2025-10-19
+
 ### 🖼️ Added
 - Added demo GIF to showcase Functions Navigator in action
 
 ## [1.3.1] – 2025-10-18
+
 ### 🧩 Improved
 - Enhanced **extension metadata** for better Marketplace discoverability (added keywords, refined description, improved categories)
 - Updated **welcome message** to include all supported languages (PHP, JavaScript, TypeScript, Python)

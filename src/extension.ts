@@ -1,7 +1,7 @@
 /**
  * 🧭 Functions Navigator – VS Code Extension
  * -----------------------------------------------------
- * Instantly browse, filter, and jump between functions in your code.
+ * Instantly browse and jump between functions in your code.
  * This is the main activation file — it wires up the Function Tree view,
  * registers commands, and connects to language parsers.
  *
@@ -9,8 +9,8 @@
  *
  * @author CodeUnit TL
  * @license MIT
- * @version 1.3.7
- * @updated 2025-10-22
+ * @version 1.4.1
+ * @updated 2025-11-03
  * @website https://codeunit.org
  * @repository https://github.com/codeunitdev/function-navigator
  * @see https://marketplace.visualstudio.com/items?itemName=CodeUnit-TL.function-tree
@@ -221,6 +221,8 @@ class JsTsParser implements LanguageParser {
         const isEmbedded = /<script/i.test(original);
         const correction = isEmbedded ? 1 : 0;
 
+        //vscode.window.showInformationMessage(correction.toString())
+        //vscode.window.showErrorMessage('Error navigating to function');
         // sf.getLine... returns {line: 0-based ...}
         return baseLine + lc.line - correction; // 1-based line in original content
       };
@@ -1001,7 +1003,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(watcher, workspaceWatcher);
 
-    
+
 
 
 
@@ -1063,6 +1065,11 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showErrorMessage('Error debugging Function Tree');
         }
       }),
+
+      
+  vscode.commands.registerCommand('functionTree.collapseAll', async () => {
+    await vscode.commands.executeCommand('workbench.actions.treeView.functionTreeView.collapseAll');
+  }),
 
       // ✅ custom delete command
       vscode.commands.registerCommand('functionTree.deleteFile', async (uri: vscode.Uri) => {

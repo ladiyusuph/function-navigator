@@ -1,8 +1,8 @@
 {
   "name": "function-tree",
   "displayName": "Functions Navigator",
-  "description": "Instantly browse, filter, and navigate functions in PHP, JavaScript, TypeScript, Python, Vue, and Svelte files with a sleek Function Navigator view in Explorer.",
-  "version": "1.4.0",
+  "description": "Instantly browse and navigate functions in PHP, JavaScript, TypeScript, Python, Vue, and Svelte files with a sleek Function Navigator view in Explorer.",
+  "version": "1.4.1",
   "icon": "icon.png",
   "license": "MIT",
   "publisher": "CodeUnit-TL",
@@ -81,12 +81,22 @@
         "icon": "$(debug-alt)"
       },
       {
+        "command": "functionTree.collapseAll",
+        "title": "Collapse All",
+        "category": "Function Tree",
+        "icon": "$(collapse-all)"
+      },
+      {
         "command": "functionTree.newFile",
-        "title": "New File..."
+        "title": "New File...",
+        "category": "Function Tree",
+        "icon": "$(new-file)"
       },
       {
         "command": "functionTree.newFolder",
-        "title": "New Folder..."
+        "title": "New Folder...",
+        "category": "Function Tree",
+        "icon": "$(new-folder)"
       },
       {
         "command": "revealFileInOS",
@@ -206,6 +216,32 @@
           "group": "4_mod@5",
           "title": "Delete"
         }
+      ],
+      "view/title": [
+        {
+          "command": "functionTree.newFile",
+          "when": "view == functionTreeView",
+          "group": "navigation@1",
+          "icon": "$(new-file)"
+        },
+        {
+          "command": "functionTree.newFolder",
+          "when": "view == functionTreeView",
+          "group": "navigation@2",
+          "icon": "$(new-folder)"
+        },
+        {
+          "command": "functionTree.refresh",
+          "when": "view == functionTreeView",
+          "group": "navigation@3",
+          "icon": "$(refresh)"
+        },
+        {
+          "command": "functionTree.collapseAll",
+          "when": "view == functionTreeView",
+          "group": "navigation@4",
+          "icon": "$(collapse-all)"
+        }
       ]
     },
     "configuration": {
@@ -243,31 +279,6 @@
       }
     }
   },
-  "keybindings": [
-    {
-      "command": "functionTree.cutFile",
-      "key": "ctrl+x",
-      "mac": "cmd+x",
-      "when": "view == functionTreeView && (viewItem == file || viewItem == folder)"
-    },
-    {
-      "command": "functionTree.copyFile",
-      "key": "ctrl+c",
-      "mac": "cmd+c",
-      "when": "view == functionTreeView && (viewItem == file || viewItem == folder)"
-    },
-    {
-      "command": "functionTree.pasteFile",
-      "key": "ctrl+v",
-      "mac": "cmd+v",
-      "when": "view == functionTreeView && viewItem == folder"
-    },
-    {
-      "command": "functionTree.openInTerminal",
-      "key": "shift+alt+r",
-      "when": "view == functionTreeView && (viewItem == file || viewItem == folder)"
-    }
-  ],
   "scripts": {
     "bundle": "node bundle.js",
     "vscode:prepublish": "npm run bundle",

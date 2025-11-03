@@ -235,6 +235,8 @@ class JsTsParser {
                 // 🧩 Correction: embedded <script> segments (e.g., in .svelte or .vue) often shift lines by +1
                 const isEmbedded = /<script/i.test(original);
                 const correction = isEmbedded ? 1 : 0;
+                //vscode.window.showInformationMessage(correction.toString())
+                //vscode.window.showErrorMessage('Error navigating to function');
                 // sf.getLine... returns {line: 0-based ...}
                 return baseLine + lc.line - correction; // 1-based line in original content
             };
@@ -958,6 +960,8 @@ function activate(context) {
                 console.error('Error debugging tree:', err);
                 vscode.window.showErrorMessage('Error debugging Function Tree');
             }
+        }), vscode.commands.registerCommand('functionTree.collapseAll', async () => {
+            await vscode.commands.executeCommand('workbench.actions.treeView.functionTreeView.collapseAll');
         }), 
         // ✅ custom delete command
         vscode.commands.registerCommand('functionTree.deleteFile', async (uri) => {
